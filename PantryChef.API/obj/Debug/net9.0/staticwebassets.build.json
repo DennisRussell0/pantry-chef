@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "JtHBcLtdJsJD1bK+skyEXGOwI7CPa+Edjj7K0tnOylE=",
+  "Source": "PantryChef.API",
+  "BasePath": "_content/PantryChef.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

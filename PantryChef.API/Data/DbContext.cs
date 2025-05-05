@@ -1,4 +1,4 @@
-// Configure relations (e.g. HasMany().WithMany() via RecipeIngredient)
+// Configures relationships between models
 
 using Microsoft.EntityFrameworkCore;
 using PantryChef.API.Models;
