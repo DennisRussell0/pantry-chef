@@ -8,5 +8,5 @@ public class RecipeIngredient
     public int IngredientId { get; set; }
     public Ingredient Ingredient { get; set; } = null!;
 
-    public string OriginalText { get; set; } = string.Empty;  // e.g. "2 tbsp olive oil"
+    public string OriginalText { get; set; } = string.Empty;
 }

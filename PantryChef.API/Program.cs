@@ -40,6 +40,16 @@ builder.Services.AddScoped<RecipeService>();
 builder.Services.AddEndpointsApiExplorer(); // Enables API endpoint discovery for Swagger
 builder.Services.AddSwaggerGen(); // Adds Swagger generator for API documentation
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Replace with your frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // Activate Swagger in development mode
@@ -48,6 +58,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger(); // Enable Swagger middleware
     app.UseSwaggerUI(); // Enable Swagger UI for testing the API
 }
+
+// Enable CORS
+app.UseCors();
 
 // Enable HTTPS redirection for secure communication
 app.UseHttpsRedirection();

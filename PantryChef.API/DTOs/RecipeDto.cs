@@ -6,4 +6,6 @@ public class RecipeDto
     public string Title { get; set; } = string.Empty;
     public double MatchingPercentage { get; set; }
     public List<string> Ingredients { get; set; } = new List<string>();
+    public string Instructions { get; set; } = string.Empty;
+    public string ImageName { get; set; } = string.Empty;
 }

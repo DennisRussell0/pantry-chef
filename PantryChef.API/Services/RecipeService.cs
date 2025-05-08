@@ -1,6 +1,5 @@
 using PantryChef.API.DTOs;
 using PantryChef.API.Interfaces;
-using PantryChef.API.Models;
 
 namespace PantryChef.API.Services;
 
@@ -33,7 +32,9 @@ public class RecipeService
                 Id = r.Id,
                 Title = r.Title,
                 MatchingPercentage = matchingPercentage,
-                Ingredients = r.RecipeIngredients.Select(ri => ri.Ingredient.Name).ToList()
+                Ingredients = r.RecipeIngredients.Select(ri => ri.Ingredient.Name).ToList(),
+                Instructions = r.Instructions,
+                ImageName = r.ImageName,
             };
         })
         .OrderByDescending(r => r.MatchingPercentage) // Sort by matching percentage

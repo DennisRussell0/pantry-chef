@@ -14,22 +14,6 @@ namespace PantryChef.API.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<IEnumerable<Recipe>> GetAllRecipesAsync()
-        {
-            return await _dbContext.Recipes
-                .Include(r => r.RecipeIngredients)
-                .ThenInclude(ri => ri.Ingredient)
-                .ToListAsync();
-        }
-
-        public async Task<Recipe?> GetRecipeByIdAsync(int id)
-        {
-            return await _dbContext.Recipes
-                .Include(r => r.RecipeIngredients)
-                .ThenInclude(ri => ri.Ingredient)
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
-
         public async Task<IEnumerable<Recipe>> GetMatchingRecipesAsync(HashSet<string> userIngredients)
         {
             // Convert userIngredients to lowercase for case-insensitive matching
@@ -41,25 +25,6 @@ namespace PantryChef.API.Repositories
                 .ThenInclude(ri => ri.Ingredient)
                 .Where(r => r.RecipeIngredients.Any(ri => lowerCaseIngredients.Contains(ri.Ingredient.Name.ToLower())))
                 .ToListAsync();
-        }
-
-        public async Task AddRecipeAsync(Recipe recipe)
-        {
-            await _dbContext.Recipes.AddAsync(recipe);
-        }
-
-        public async Task DeleteRecipeAsync(int id)
-        {
-            var recipe = await GetRecipeByIdAsync(id);
-            if (recipe != null)
-            {
-                _dbContext.Recipes.Remove(recipe);
-            }
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _dbContext.SaveChangesAsync();
         }
     }
 }

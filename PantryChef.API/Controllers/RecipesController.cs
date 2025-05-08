@@ -18,20 +18,15 @@ public class RecipesController : ControllerBase
     // GET: api/recipes/match
     [HttpGet("match")]
     public async Task<ActionResult<IEnumerable<RecipeDto>>> GetMatchingRecipes(
-        [FromQuery] string ingredients, 
-        [FromQuery] int page = 1, 
-        [FromQuery] int pageSize = 10)
+        [FromQuery] string ingredients)
     {
         var userIngredients = ingredients.Split(',').Select(i => i.Trim().ToLower()).ToHashSet();
 
         var matchingRecipes = await _recipeService.GetMatchingRecipesAsync(userIngredients);
 
-        // Apply pagination
-        var paginatedRecipes = matchingRecipes
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+        // Limit the results to a maximum of 10 recipes
+        var limitedRecipes = matchingRecipes.Take(10).ToList();
 
-        return Ok(paginatedRecipes);
+        return Ok(limitedRecipes);
     }
 }

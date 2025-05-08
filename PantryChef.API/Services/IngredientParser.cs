@@ -61,7 +61,7 @@ public class IngredientParser
         "halibut", "shrimp", "chorizo", "bacon", "brisket", "stew meat", "eggs",
         
         // Grøntsager og frugt
-        "potatoes", "sweet potatoes", "idaho potatoes", "gold potatoes", "carrot",
+        "potatoes", "sweet potatoes", "idaho potatoes", "gold potatoes", "carrot", "celery",
         "parsnips", "squash", "zucchini", "tomato", "beets", "spinach", "cucumbers",
         "avocados", "green beans", "green cabbage", "broccolini", "mangoes", "apples",
         "lemon", "lime", "orange", "grapes", "pineapple", "papaya", "berries", "chiles",
