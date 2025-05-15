@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace PantryChef.API.Services;
 
+// Service for seeding the database with data from a CSV file
 public class CsvSeeder
 {
     private readonly PantryChefDbContext _dbContext;
@@ -24,9 +25,8 @@ public class CsvSeeder
     // Removes all existing data to ensure clean seeding
     private async Task ClearDatabaseAsync()
     {
-        // Remove all data from the Recipes and Ingredients tables
-        _dbContext.Recipes.RemoveRange(_dbContext.Recipes);
-        _dbContext.Ingredients.RemoveRange(_dbContext.Ingredients);
+        _dbContext.Recipes.RemoveRange(_dbContext.Recipes); // Remove all recipes
+        _dbContext.Ingredients.RemoveRange(_dbContext.Ingredients); // Remove all ingredients
         await _dbContext.SaveChangesAsync();
 
         // Reset ID sequences for PostgreSQL
@@ -42,6 +42,13 @@ public class CsvSeeder
         using var reader = new StreamReader(_csvPath);
         using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
+        // Configure CSV reader to ignore these "recipes"
+        var unwantedTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Fabric-Covered Vase Centerpiece",
+            "Napkin Rings and a Decorated Vase from Corrugated Cardboard",
+        };
+
         // Read all records from the CSV file
         var records = csv.GetRecords<CsvRecipe>().ToList();
 
@@ -53,6 +60,13 @@ public class CsvSeeder
 
         foreach (var record in records)
         {
+            // Skip unwanted "recipes" based on their titles
+            if (unwantedTitles.Contains(record.Title.Trim()))
+            {
+                _logger.LogInformation("Skipping unwanted recipe: {Title}", record.Title);
+                continue;
+            }
+
             // Step 1: Remove enclosing square brackets
             var cleanedIngredients = record.Cleaned_Ingredients.Trim('[', ']');
 
@@ -72,17 +86,23 @@ public class CsvSeeder
                     .Select(i =>
                     {
                         var trimmed = i.Trim();
+
+                        // Explicitly skip unwanted entries
+                        if (string.IsNullOrWhiteSpace(trimmed) ||
+                            trimmed.Equals("divided", StringComparison.OrdinalIgnoreCase) ||
+                            trimmed.Equals("to taste", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return null;
+                        }
+
                         var coreName = _ingredientParser.ExtractCoreIngredient(trimmed);
 
                         // Check if the ingredient already exists in the database
                         if (!existingIngredients.TryGetValue(coreName, out var ingredient))
                         {
-                            // Create a new ingredient and add it to the dictionary
-                            ingredient = new Ingredient { Name = coreName };
+                            ingredient = new Ingredient { Name = coreName }; // Create a new ingredient
                             existingIngredients[coreName] = ingredient;
-
-                            // Add the new ingredient to the DbContext
-                            _dbContext.Ingredients.Add(ingredient);
+                            _dbContext.Ingredients.Add(ingredient); // Add the new ingredient to the DbContext
                         }
 
                         return new RecipeIngredient
@@ -91,6 +111,8 @@ public class CsvSeeder
                             OriginalText = trimmed
                         };
                     })
+                    .Where(ri => ri != null)
+                    .Cast<RecipeIngredient>() // Cast to non-nullable type
                     .GroupBy(ri => ri.Ingredient.Name) // Avoid duplicate RecipeIngredient entries
                     .Select(g => g.First()) // Take the first unique RecipeIngredient
                     .ToList()
@@ -101,8 +123,7 @@ public class CsvSeeder
 
         // Batch insert recipes
         await _dbContext.Recipes.AddRangeAsync(recipes);
-        // Save changes to the database
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(); // Save changes to the database
 
         _logger.LogInformation("Database seeded with {Count} recipes.", recipes.Count);
     }

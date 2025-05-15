@@ -2,11 +2,10 @@
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  font-weight: 500;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: #ffffff;
   background-color: #1f1f1f;
 
   font-synthesis: none;
@@ -15,17 +14,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+input::placeholder {
+  font-weight: 400;
+  color: #a0a0a0;
+}
+
 a {
   text-decoration: inherit;
 }
 
 button {
   font-family: inherit;
+  cursor: pointer;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #1f1f1f;
+    color: #2b2b2b;
     background-color: #ffffff;
   }
 }

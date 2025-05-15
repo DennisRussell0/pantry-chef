@@ -1,9 +1,10 @@
 using PantryChef.API.Models;
 
-namespace PantryChef.API.Interfaces
+namespace PantryChef.API.Interfaces;
+
+// Interface defining the contract for the Recipe repository
+public interface IRecipeRepository
 {
-    public interface IRecipeRepository
-    {
-        Task<IEnumerable<Recipe>> GetMatchingRecipesAsync(HashSet<string> userIngredients);
-    }
+    // Fetch recipes that match the user's selected ingredients
+    Task<IEnumerable<Recipe>> GetMatchingRecipesAsync(HashSet<string> userIngredients);
 }

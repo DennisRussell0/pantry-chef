@@ -1,5 +1,6 @@
 namespace PantryChef.API.Models;
 
+// Represents the many-to-many relationship between Recipe and Ingredient
 public class RecipeIngredient
 {
     public int RecipeId { get; set; }
