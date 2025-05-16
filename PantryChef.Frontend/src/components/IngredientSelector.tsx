@@ -27,7 +27,7 @@ const IngredientSelector: React.FC = () => {
   };
 
   if (loading) return <p className="text-[#a0a0a0] italic">Loading ingredients...</p>;
-  if (error) return <p>{error}</p>;
+  if (error) return <p className="text-[#a0a0a0] italic">{error}</p>;
 
   return (
     <div className="px-9 flex flex-col gap-9 items-center text-center">

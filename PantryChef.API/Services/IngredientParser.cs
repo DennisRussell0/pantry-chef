@@ -11,7 +11,7 @@ public class IngredientParser
 {
     // NEW START
     private readonly IngredientMicroserviceClient? _microserviceClient;
-    private const double SimilarityThreshold = 0.75; // Adjust as needed
+    private const double SimilarityThreshold = 0.61; // Adjust as needed
 
     public IngredientParser() { }
 
@@ -60,7 +60,7 @@ public class IngredientParser
     {
         "black pepper", "feta", "buttermilk", "olive oil", "vegetable oil", "flour", "sugar", "cream",
         "eggs", "bread", "onion", "garlic", "broth", "butternut squash", "whole chicken",
-        "paprika", "cinnamon", "nutmeg", "allspice", "cayenne", "coriander", "tomatoes", "pickles",
+        "paprika", "cinnamon", "nutmeg", "allspice", "cayenne", "coriander", "tomato paste", "tomatoes", "pickles",
         "parsley", "rosemary", "thyme", "basil", "oregano", "sage", "mint", "tarragon", "rib eye",
         "ground beef", "pork", "turkey", "ham", "lamb", "salmon", "cod", "shrimp", "sweet potatoes",
         "potatoes", "carrot", "celery", "tomato", "spinach", "cucumber", "avocado", "gin", "duck fat",
@@ -92,20 +92,6 @@ public class IngredientParser
     // NEW START
     public async Task<string> ExtractCoreIngredientSmartAsync(string ingredient)
     {
-        if (_microserviceClient != null)
-        {
-            var (coreIngredient, similarity) = await _microserviceClient.GetCoreIngredientWithScoreAsync(ingredient);
-            if (similarity >= SimilarityThreshold && !string.IsNullOrWhiteSpace(coreIngredient))
-                return coreIngredient;
-        }
-        // Fallback to original logic
-        return ExtractCoreIngredient(ingredient);
-    }
-    // NEW END
-
-    // Extracts the core ingredient from a given raw ingredient string
-    public string ExtractCoreIngredient(string ingredient)
-    {
         if (string.IsNullOrWhiteSpace(ingredient))
             return string.Empty;
 
@@ -130,15 +116,29 @@ public class IngredientParser
 
         // 5. Attempt full string match against common ingredients
         var joined = string.Join(" ", words).ToLowerInvariant();
-        var match = CommonIngredients.FirstOrDefault(ci => joined.Contains(ci.ToLowerInvariant()));
+        var match = CommonIngredients.FirstOrDefault(ci => joined == ci.ToLowerInvariant());
         if (match != null) return match;
 
-        // 6. Fallback: try matching individual words
+        // 6. Substring match (prioritize longer ingredients)
+        var substringMatch = CommonIngredients
+            .OrderByDescending(ci => ci.Length)
+            .FirstOrDefault(ci => joined.Contains(ci.ToLowerInvariant()));
+        if (substringMatch != null) return substringMatch;
+
+        // 7. Microservice fallback
+        if (_microserviceClient != null)
+        {
+            var (coreIngredient, similarity) = await _microserviceClient.GetCoreIngredientWithScoreAsync(ingredient);
+            if (!string.IsNullOrWhiteSpace(coreIngredient) && similarity >= SimilarityThreshold)
+                return coreIngredient;
+        }
+
+        // 8. Fallback: try matching individual words
         var originalWords = ingredient.ToLowerInvariant().Split(new[] { ' ', ',', '-', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
         var wordMatch = CommonIngredients.FirstOrDefault(ci => originalWords.Contains(ci.ToLowerInvariant()));
         if (wordMatch != null) return wordMatch;
 
-        // 7. Final fallback: return the last 1–2 words as best guess
+        // 9. Final fallback: return the last 1–2 words as best guess
         return string.Join(" ", words.TakeLast(Math.Min(2, words.Count))).ToLowerInvariant();
     }
 }

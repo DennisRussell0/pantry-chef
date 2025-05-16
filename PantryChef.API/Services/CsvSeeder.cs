@@ -72,63 +72,66 @@ public class CsvSeeder
 
             // Step 2: Split on commas outside of quotes
             var ingredients = Regex.Split(cleanedIngredients, @",(?=(?:[^']*'[^']*')*[^']*$)")
-                .Select(i => i.Trim().Trim('\'')) // Trim whitespace and surrounding single quotes
-                .Where(i => !string.IsNullOrWhiteSpace(i)) // Remove empty entries
+                .Select(i => i.Trim().Trim('\''))
+                .Where(i => !string.IsNullOrWhiteSpace(i))
                 .ToList();
 
-            // Create a new Recipe object for each record
+            // Parse ingredients asynchronously
+            var recipeIngredients = new List<RecipeIngredient>();
+            foreach (var i in ingredients)
+            {
+                var trimmed = i.Trim();
+
+                // Explicitly skip unwanted entries
+                if (string.IsNullOrWhiteSpace(trimmed) ||
+                    trimmed.Equals("divided", StringComparison.OrdinalIgnoreCase) ||
+                    trimmed.Equals("to taste", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var coreName = await _ingredientParser.ExtractCoreIngredientSmartAsync(trimmed);
+
+                // Check if the ingredient already exists in the database
+                if (!existingIngredients.TryGetValue(coreName, out var ingredient))
+                {
+                    ingredient = new Ingredient { Name = coreName };
+                    existingIngredients[coreName] = ingredient;
+                    _dbContext.Ingredients.Add(ingredient);
+                }
+
+                var recipeIngredient = new RecipeIngredient
+                {
+                    Ingredient = ingredient,
+                    OriginalText = trimmed
+                };
+                recipeIngredients.Add(recipeIngredient);
+            }
+
+            // Avoid duplicate RecipeIngredient entries for the same ingredient
+            var uniqueRecipeIngredients = recipeIngredients
+                .GroupBy(ri => ri.Ingredient.Name)
+                .Select(g => g.First())
+                .ToList();
+
             var recipe = new Recipe
             {
                 Title = record.Title,
                 Instructions = record.Instructions,
                 ImageName = record.Image_Name,
-                RecipeIngredients = ingredients
-                    .Select(i =>
-                    {
-                        var trimmed = i.Trim();
-
-                        // Explicitly skip unwanted entries
-                        if (string.IsNullOrWhiteSpace(trimmed) ||
-                            trimmed.Equals("divided", StringComparison.OrdinalIgnoreCase) ||
-                            trimmed.Equals("to taste", StringComparison.OrdinalIgnoreCase))
-                        {
-                            return null;
-                        }
-
-                        var coreName = _ingredientParser.ExtractCoreIngredient(trimmed);
-
-                        // Check if the ingredient already exists in the database
-                        if (!existingIngredients.TryGetValue(coreName, out var ingredient))
-                        {
-                            ingredient = new Ingredient { Name = coreName }; // Create a new ingredient
-                            existingIngredients[coreName] = ingredient;
-                            _dbContext.Ingredients.Add(ingredient); // Add the new ingredient to the DbContext
-                        }
-
-                        return new RecipeIngredient
-                        {
-                            Ingredient = ingredient,
-                            OriginalText = trimmed
-                        };
-                    })
-                    .Where(ri => ri != null)
-                    .Cast<RecipeIngredient>() // Cast to non-nullable type
-                    .GroupBy(ri => ri.Ingredient.Name) // Avoid duplicate RecipeIngredient entries
-                    .Select(g => g.First()) // Take the first unique RecipeIngredient
-                    .ToList()
+                RecipeIngredients = uniqueRecipeIngredients
             };
 
-            recipes.Add(recipe); // Add the recipe to the list
+            recipes.Add(recipe);
         }
 
         // Batch insert recipes
         await _dbContext.Recipes.AddRangeAsync(recipes);
-        await _dbContext.SaveChangesAsync(); // Save changes to the database
+        await _dbContext.SaveChangesAsync();
 
         _logger.LogInformation("Database seeded with {Count} recipes.", recipes.Count);
     }
 
-    
     // Represents a single row in the CSV file
     private class CsvRecipe
     {

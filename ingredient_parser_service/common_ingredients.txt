@@ -19,6 +19,7 @@ nutmeg
 allspice
 cayenne
 coriander
+tomato paste
 tomatoes
 pickles
 parsley
